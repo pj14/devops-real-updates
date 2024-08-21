@@ -1,1 +1,1 @@
-export const POLLING_INTERVAL = '*/5 * * * * *';
+export const POLLING_INTERVAL = 15000;
