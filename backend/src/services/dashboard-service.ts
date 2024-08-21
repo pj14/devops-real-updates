@@ -40,6 +40,8 @@ export class DashboardService {
             const data = await this.fetchRegionData(region);
             this.broadcastDataToRegionClients(region, data);
         } 
+
+        console.log("clientSubscriptions", this.clientSubscriptions);
     }
 
     private async fetchRegionData(region: string) {
