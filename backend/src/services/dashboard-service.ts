@@ -1,6 +1,7 @@
 import { WebSocket, WebSocketServer } from "ws";
 import { ClientSubscription } from "../types/clinet-types";
 import { fetchServerData, generateRegionURL, processServerData } from "../utils/api-utils";
+import { cacheRegionData, getCachedData } from "./redis-service";
 
 
 export class DashboardService {
@@ -39,9 +40,14 @@ export class DashboardService {
         if (this.clientSubscriptions.filter(sub => sub.region === region).length === 1) {
             const data = await this.fetchRegionData(region);
             this.broadcastDataToRegionClients(region, data);
-        } 
+        } else {
+            const cachedData = await getCachedData(region);
+            if (cachedData) {
+                ws.send(JSON.stringify(cachedData));
+            } 
+        }
 
-        console.log("clientSubscriptions", this.clientSubscriptions);
+        console.log("clientSubscriptions", this.clientSubscriptions.map(sub => sub.region));
     }
 
     private async fetchRegionData(region: string) {
@@ -50,6 +56,7 @@ export class DashboardService {
             const serverResponse = await fetchServerData(regionURL);
 
             const devopsMetrics = processServerData(serverResponse);
+            await cacheRegionData(devopsMetrics, region);
 
             return devopsMetrics;
         } catch (error) {
