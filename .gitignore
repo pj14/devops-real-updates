@@ -3,7 +3,7 @@
 
 
 /backend/dist/
-/frontend/build/
+/frontend/.next/
 
 /backend/.env
 /frontend/.env
