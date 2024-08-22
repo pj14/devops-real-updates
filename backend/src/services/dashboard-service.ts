@@ -1,4 +1,5 @@
 import { WebSocket, WebSocketServer } from "ws";
+import { v4 as uuidv4 } from 'uuid';
 import { ClientSubscription } from "../types/clinet-types";
 import { fetchServerData, generateRegionURL, processServerData } from "../utils/api-utils";
 import { cacheRegionData, getCachedData } from "./redis-service";
@@ -15,6 +16,7 @@ export class DashboardService {
         this.wss = wss;
 
         this.wss.on('connection', (websocketConnection) => {
+            const connectionId = uuidv4();
             websocketConnection.on('message', async (message) => {
                 try {
                     const data = JSON.parse(message.toString());
@@ -22,37 +24,40 @@ export class DashboardService {
                     const region = data.region
 
                     if(region) {
-                        await this.handleRegionSubscription(websocketConnection, region);
+                    
+                        await this.handleRegionSubscription(connectionId, websocketConnection, region);
                     }
                 } catch (error) {
-                    console.log("Invalid message: ", error);
+                    logger.error("Invalid message: ", error);
                 }
             });
 
             websocketConnection.on('close', () => {
-                this.handleConnectionClosing(websocketConnection);
+                this.handleConnectionClosing(connectionId);
+                logger.info("Connection closed. Updated clientSubscriptions", this.clientSubscriptions.map(sub => sub.region));
             })
         });
 
         this.startPolling();
     }
 
-    private async handleRegionSubscription(ws: WebSocket, region: string) {
-        if (!this.clientSubscriptions.some(sub => sub.region === region && sub.websocket === ws)) {
-            this.clientSubscriptions.push({ region, websocket: ws });
-        }
+    private async handleRegionSubscription(id: string, ws: WebSocket, region: string) {
+        this.clientSubscriptions = this.clientSubscriptions.filter(sub => sub.id !== id);
 
-        if (this.clientSubscriptions.filter(sub => sub.region === region).length === 1) {
-            const data = await this.fetchRegionData(region);
-            this.broadcastDataToRegionClients(region, data);
+        this.clientSubscriptions.push({ id, region, websocket: ws });
+
+    
+        const cachedData = await getCachedData(region);
+        if (cachedData) {
+            ws.send(JSON.stringify(cachedData));
         } else {
-            const cachedData = await getCachedData(region);
-            if (cachedData) {
-                ws.send(JSON.stringify(cachedData));
-            } 
+            const data = await this.fetchRegionData(region);
+            if (data) {
+                ws.send(JSON.stringify(data));
+            }
         }
 
-        console.log("clientSubscriptions", this.clientSubscriptions.map(sub => sub.region));
+        logger.info("clientSubscriptions", this.clientSubscriptions.map(sub => sub.id));
     }
 
     private async fetchRegionData(region: string) {
@@ -65,7 +70,7 @@ export class DashboardService {
 
             return devopsMetrics;
         } catch (error) {
-            console.error("Error fetching data: ", error);
+            logger.error("Error fetching data: ", error);
             
             return null; 
         }
@@ -81,16 +86,14 @@ export class DashboardService {
           });
       }
 
-    private handleConnectionClosing(ws: WebSocket) {
-        this.clientSubscriptions = this.clientSubscriptions.filter(sub => sub.websocket !== ws);
+    private handleConnectionClosing(id: string) {
+        this.clientSubscriptions = this.clientSubscriptions.filter(sub => sub.id !== id);
     }
 
     private startPolling() {
         this.pollingInterval = setInterval(async () => {
-            logger.info("POlling Polling on the way");
             const currentRegions = [...new Set(this.clientSubscriptions.map(sub => sub.region))];
             
-            logger.info(`INterval current regions: ${currentRegions}`);
 
             for(const region of currentRegions) {
                 const newData = await this.fetchRegionData(region);

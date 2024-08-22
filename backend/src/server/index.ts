@@ -15,6 +15,7 @@ export default async (expressServer) => {
     });
   });
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const dashboardService = new DashboardService(websocketServer);
 
   return websocketServer;

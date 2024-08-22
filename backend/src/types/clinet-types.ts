@@ -1,11 +1,13 @@
 import { WebSocket } from "ws";
 
 export interface ClientSubscription {
+    id: string;
     region: string;
     websocket: WebSocket;
 }
 
 export interface DevopsData {
+    timestamp: string;
     region: string,
     redisServiceStatus: boolean;
     databaseServiceStatus: boolean;

@@ -21,7 +21,11 @@ export function processServerData(data: ServerResponse) : DevopsData {
 
     const serverStats = stats?.server;
 
+    const timestamp = new Date().toISOString();
+    
+
     return {
+        timestamp: timestamp,
         region: region,
         redisServiceStatus: services?.redis,
         databaseServiceStatus: services?.database,
