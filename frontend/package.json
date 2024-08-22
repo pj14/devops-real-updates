@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "prod": "npm install && npm run build"
+    "prod": "npm install && npm run build && npm run start"
   },
   "dependencies": {
     "@emotion/cache": "^11.13.1",
