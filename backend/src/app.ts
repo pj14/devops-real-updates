@@ -1,5 +1,6 @@
 import express from 'express';
 import dotenv from 'dotenv';
+import cors from 'cors';
 import websockets from './server'
 import { getCache } from './utils/redis-client';
 import { logger } from './utils/logger';
@@ -7,6 +8,8 @@ import { logger } from './utils/logger';
 dotenv.config();
 const app = express();
 const port = process.env.PORT || 5001;;
+
+app.use(cors<Request>());
 
 getCache()
   .then(() => {
