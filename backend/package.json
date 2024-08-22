@@ -8,8 +8,8 @@
     "build": "tsc",
     "lint": "npx eslint --ignore-pattern dist/*",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "prebuild:prod": "npm ci --only=production",
-    "prod": "npm run prebuild:prod && npm run build && npm prune --production && npm start"
+    "prebuild:prod": "npm install",
+    "prod": "npm run prebuild:prod && npm run build"
   },
   "keywords": [],
   "author": "",
