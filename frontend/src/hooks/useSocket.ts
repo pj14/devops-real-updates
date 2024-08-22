@@ -14,7 +14,7 @@ export function useSocket(props: IUseSocketProps) {
         setMetrics([]);
 
         const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-        const host = window.location.host?.split(":")?.[0] + ":" + process.env.NEXT_PUBLIC_SOCKET_PORT;
+        const host = process.env.NEXT_PUBLIC_SOCKET_HOST || "devops-real-updates-4.onrender.com";
 
         if (wsRef.current) {
             console.log("Closing previous connection connection");
